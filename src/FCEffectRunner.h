@@ -39,19 +39,22 @@
 #include "OPCClient.h"
 #include "cinder/Json.h"
 #include "cinder/Utilities.h"
-#include "cinder/app/AppNative.h"
-#include <boost/enable_shared_from_this.hpp>
+#include "cinder/app/App.h"
 #include "FCEffect.h"
 #include "FCEffectVisualizer.h"
 
+using namespace std;
+using namespace ci;
+using namespace ci::app;
+
 class FCEffectRunner;
-typedef boost::shared_ptr< FCEffectRunner > FCEffectRunnerRef;
+typedef std::shared_ptr< FCEffectRunner > FCEffectRunnerRef;
 
 class FCEffect;
-typedef boost::shared_ptr< FCEffect > FCEffectRef;
+typedef std::shared_ptr< FCEffect > FCEffectRef;
 
-
-class FCEffectRunner : public boost::enable_shared_from_this<FCEffectRunner>{
+class FCEffectRunner : public std::enable_shared_from_this<FCEffectRunner>
+{
 public:
     static FCEffectRunnerRef create()
     {
@@ -79,7 +82,7 @@ public:
     // Access to most recent framebuffer information
     const FCEffect::PixelInfoVec& getPixelInfo() const;
     const uint8_t* getPixel(unsigned index) const;
-    void getPixelColor(unsigned index, ci::Vec3f rgb);
+    void getPixelColor(unsigned index, vec3 rgb);
 
     // Time stats
     float getFrameRate() const;

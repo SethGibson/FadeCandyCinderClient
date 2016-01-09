@@ -1,13 +1,15 @@
-#include "cinder/app/AppNative.h"
+#include "cinder/app/App.h"
+#include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
-#include "FCEffectRunner.h"
 #include "cinder/Perlin.h"
 #include "cinder/Rand.h"
-#include "cinder/MayaCamUI.h"
+#include "cinder/CameraUI.h"
 #include "cinder/gl/Texture.h"
+#include "FCEffectRunner.h"
+
 // -------- SPOUT -------------
-#include "spout.h"
-using namespace Spout;
+#include "Spout/SpoutDLL.h"
+using namespace Spout2;
 // ----------------------------
 
 using namespace ci;
@@ -15,66 +17,69 @@ using namespace ci::app;
 using namespace std;
 
 class MyEffect;
-typedef boost::shared_ptr< MyEffect > MyEffectRef;
+typedef std::shared_ptr< MyEffect > MyEffectRef;
 
 class MyEffect : public FCEffect
 {
 public:
-	static MyEffectRef create(Surface pSurf)
+	static MyEffectRef create(SurfaceRef pSurf)
     {
-        return ( MyEffectRef )( new MyEffect(pSurf) );
+        return MyEffectRef( new MyEffect(pSurf) );
     }
-    MyEffect(Surface pSurf)
-       {
+    MyEffect(SurfaceRef pSurf)
+    {
 		mSurf = pSurf;
 	}
 	float time;
-	Surface mSurf;
+	SurfaceRef mSurf;
 
-    void beginFrame(const FrameInfo& f)
+    void beginFrame(const FrameInfo& f) override
     {
         const float speed = 1.0;
         time += f.timeDelta * speed;
     }
 
-    void shader(ci::Vec3f& rgb, const PixelInfo& p)
+    void shader(vec3& rgb, const PixelInfo& p) override
     {
-		if(mSurf){
-			Vec2f pt = Vec2f((p.point.x),(p.point.y));
+		if (mSurf)
+		{
+			vec2 pt = vec2((p.point.x), (p.point.y));
 			//pt.x = pt.x/4.f;
 			//pt.x += mSection;
-			auto colorval = mSurf.getPixel(Vec2i(pt.x*mSurf.getWidth(),pt.y*mSurf.getHeight()));
-			rgb = Vec3f(colorval.r/255.f,colorval.g/255.f,colorval.b/255.f);
+			auto colorval = mSurf->getPixel(ivec2(pt.x*mSurf->getWidth(), pt.y*mSurf->getHeight()));
+			rgb = vec3(colorval.r / 255.f, colorval.g / 255.f, colorval.b / 255.f);
 		}
-		else 
-			rgb = Vec3f(0,0,0);
-        
+		else
+			rgb = vec3();
 	}
 };
 
-class FadeCandyClientApp : public AppNative {
+class FadeCandyClientApp : public App
+{
 public:
-	void setup();
-	void update();
-	void draw();
-	FCEffectRunnerRef effectRunner;
-	MayaCamUI	mMayaCam;
-	// keep track of the mouse
-	Vec2i		mMousePos;
+	void setup() override;
+	void update() override;
+	void draw() override;
     
-    void prepareSettings( Settings *settings );
-	void mouseMove( MouseEvent event );
-	void mouseDown( MouseEvent event );
-	void mouseDrag( MouseEvent event );
-	void resize();
+	void mouseMove( MouseEvent event ) override;
+	void mouseDown( MouseEvent event ) override;
+	void mouseDrag( MouseEvent event ) override;
+	void resize() override;
+
 	bool bInitialized; // true if a sender initializes OK
 	bool bDoneOnce; // only try to initialize once
 	bool bTextureShare; // tells us if texture share compatible
 	char SenderName[256]; // sender name 
-	gl::Texture spoutTexture;  // Local Cinder texture used for sharing
-	Surface spoutSurf;
+
 	unsigned int g_Width, g_Height; // size of the texture being sent out
+	gl::Texture2dRef spoutTexture;  // Local Cinder texture used for sharing
+
+	FCEffectRunnerRef effectRunner;
 	MyEffectRef e;
+	SurfaceRef spoutSurf;
+
+	CameraUi	mMayaCam;
+	ivec2		mMousePos;
 };
 
 void FadeCandyClientApp::setup()
@@ -86,7 +91,7 @@ void FadeCandyClientApp::setup()
 	effectRunner = FCEffectRunner::create("127.0.0.1",7890);
 	//create instance of our custom effect
 	e = MyEffect::create(spoutSurf);
-	effectRunner->setEffect(boost::dynamic_pointer_cast<FCEffect>( e ));
+	effectRunner->setEffect(e);
 	effectRunner->setMaxFrameRate(400);
 	effectRunner->setVerbose(true);
     effectRunner->setLayout("layouts/grid16x8.json",0);
@@ -96,17 +101,12 @@ void FadeCandyClientApp::setup()
 	
 	// set up the camera
 	CameraPersp cam;
-	cam.setEyePoint( Vec3f(300.0f, 250.f, -500.0f) );
-	cam.setCenterOfInterestPoint( Vec3f(300.0f, 200.0f, 0.0f) );
+	cam.lookAt(vec3(300.0f, 250.f, -500.0f), vec3(300.0f, 200.0f, 0.0f), vec3(0, 1, 0));
 	cam.setPerspective( 60.0f, getWindowAspectRatio(), 1.0f, 1000.0f );
-	mMayaCam.setCurrentCam( cam );
-	gl::disableVerticalSync();
+	mMayaCam.setCamera( &cam );
+	gl::enableVerticalSync(false);
 }
-void FadeCandyClientApp::prepareSettings( Settings *settings )
-{
-    //settings->setFrameRate( 400.0f );
-	settings->disableFrameRate();
-}
+
 void FadeCandyClientApp::update()
 {
 	unsigned int width, height;
@@ -122,7 +122,7 @@ void FadeCandyClientApp::update()
 		strcpy_s(tempname, 256, "Sender name"); 
 		width  = g_Width; // pass the initial width and height (they will be adjusted if necessary)
 		height = g_Height;
-		bInitialized = InitReceiver(tempname, width, height, bTextureShare);
+		bInitialized = CreateReceiver(tempname, width, height, bTextureShare);
 		// Initialization will fail if there are no senders, so just keep trying unti a sender starts
 
 		if(bInitialized) {
@@ -146,7 +146,7 @@ void FadeCandyClientApp::update()
 				g_Width = width;
 				g_Height = height;
 				// Reset the local receiving texture size
-				spoutTexture =  gl::Texture(g_Width, g_Height);
+				spoutTexture =  gl::Texture2d::create(g_Width, g_Height);
 				
 				// reset render window
 				//setWindowSize(g_Width, g_Height);
@@ -170,7 +170,7 @@ void FadeCandyClientApp::draw()
 
 	// clear out the window with black
 	gl::clear( Color( 0, 0, 0 ) );
-	gl::setViewport( getWindowBounds() );
+	gl::viewport( getWindowSize() );
 	gl::color( Color(1,1,1) );
 	gl::setMatrices( mMayaCam.getCamera() );
 	effectRunner->draw();
@@ -185,7 +185,7 @@ void FadeCandyClientApp::draw()
 				mDefault = Font( "Arial", 16 );
 	#endif
 	gl::enableAlphaBlending();
-	gl::drawStringCentered(effectRunner->getDebugString(),Vec2f(getWindowCenter().x,5),Color(1,1,1),mDefault);
+	gl::drawStringCentered(effectRunner->getDebugString(),vec2(getWindowCenter().x,5),Color(1,1,1),mDefault);
 	gl::disableAlphaBlending();
 
 	// Save current global width and height - they will be changed
@@ -203,7 +203,7 @@ void FadeCandyClientApp::draw()
 	//
 	if(bInitialized && spoutTexture) {
 
-		if(!ReceiveTexture(SenderName, spoutTexture.getId(), spoutTexture.getTarget(), width, height)) {
+		if(!ReceiveTexture(SenderName, width, height, spoutTexture->getId(), spoutTexture->getTarget())) {
 			//
 			// Receiver failure :
 			//	1)	width and height are zero for read failure.
@@ -224,16 +224,15 @@ void FadeCandyClientApp::draw()
 				g_Width  = width;
 				g_Height = height;
 				// Update the local texture to receive the new dimensions
-				spoutTexture =  gl::Texture(g_Width, g_Height);
+				spoutTexture =  gl::Texture2d::create(g_Width, g_Height);
 				
 				return; // quit for next round
 			}
 		}
 		else {
 
-			spoutSurf = Surface(spoutTexture);
+			spoutSurf = Surface::create(spoutTexture->createSource());
 			e->mSurf = spoutSurf;
-			
 		}
 	}
 }
@@ -264,7 +263,14 @@ void FadeCandyClientApp::resize()
 	// adjust aspect ratio
 	CameraPersp cam = mMayaCam.getCamera();
 	cam.setAspectRatio( getWindowAspectRatio() );
-	mMayaCam.setCurrentCam( cam );
+	mMayaCam.setCamera( &cam );
 }
 
-CINDER_APP_NATIVE( FadeCandyClientApp, RendererGl )
+void prepareSettings(App::Settings *settings)
+{
+	//settings->setFrameRate( 400.0f );
+	settings->disableFrameRate();
+}
+
+
+CINDER_APP( FadeCandyClientApp, RendererGl, prepareSettings )

@@ -47,7 +47,7 @@ OPCClient::OPCClient( ) : mConnecting(false)
 	mHost		= "localhost";
 	mPort		= 7840;
 	mRequest	= "echo";
-	mIo = shared_ptr<boost::asio::io_service>( new boost::asio::io_service() );
+	mIo = std::shared_ptr<asio::io_service>( new asio::io_service() );
 	mClient = TcpClient::create( *mIo );
 }
 OPCClient::~OPCClient( ) 
@@ -99,7 +99,7 @@ void OPCClient::write(std::string strBuffer)
 		// you to send any kind of data. Because it's more common to
 		// work with strings, the session object has static convenience 
 		// methods for converting between std::string and ci::Buffer.
-		Buffer buffer = TcpSession::stringToBuffer( strBuffer );
+		BufferRef buffer = TcpSession::stringToBuffer( strBuffer );
 		mSession->write( buffer );
 	} else {	
 		// Before we can write, we need to establish a connection 
@@ -110,7 +110,7 @@ void OPCClient::write(std::string strBuffer)
 void OPCClient::write(std::vector<char> &data)
 {
 	if ( mSession && mSession->getSocket()->is_open()  ) {
-		Buffer buffer = Buffer( &data[ 0 ], data.size() );
+		BufferRef buffer = Buffer::create( &data[ 0 ], data.size() );
 		mSession->write( buffer );
 	} else {	
 		// Before we can write, we need to establish a connection 

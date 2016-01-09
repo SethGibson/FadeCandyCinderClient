@@ -31,7 +31,7 @@
 
 class OPCClient;
 
-typedef boost::shared_ptr< OPCClient > OPCClientRef;
+typedef std::shared_ptr< OPCClient > OPCClientRef;
 
 class OPCClient {
 public:
@@ -109,5 +109,5 @@ private:
 	void						onRead( ci::Buffer buffer );
 	void						onWrite( size_t bytesTransferred );
 
-	std::shared_ptr<boost::asio::io_service>	mIo;
+	std::shared_ptr<asio::io_service>	mIo;
 };

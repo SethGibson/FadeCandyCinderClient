@@ -35,8 +35,6 @@
 */
 
 #include "FCEffectRunner.h"
-#include "boost/algorithm/string.hpp"
-#include "boost/format.hpp"
 
 #define MAX_DEBUG 225
 
@@ -191,8 +189,9 @@ void FCEffectRunner::doFrame(float timeDelta)
 			
             uint8_t *dest = OPCClient::Header::view(frameBuffer).data();
 
-            for (FCEffect::PixelInfoIter i = frameInfo.pixels.begin(), e = frameInfo.pixels.end(); i != e; ++i) {
-                Vec3f rgb(0.f, 0.f, 0.f);
+            for (FCEffect::PixelInfoIter i = frameInfo.pixels.begin(), e = frameInfo.pixels.end(); i != e; ++i)
+			{
+                vec3 rgb(0.f, 0.f, 0.f);
                 const FCEffect::PixelInfo &p = *i;
 
                 if (p.isMapped()) {
@@ -254,7 +253,12 @@ void FCEffectRunner::debug()
         getPercentBusy(),
         1e3f * getBusyTimePerFrame(),
         1e3f * getIdleTimePerFrame());
-	std::string debugLine = boost::str(boost::format(" %7.2f FPS -- %6.2f%% CPU [%.2fms busy, %.2fms idle]\n") %getFrameRate() %getPercentBusy() %(1e3f * getBusyTimePerFrame()) %(1e3f * getIdleTimePerFrame()));
+	std::string debugLine(" " + to_string(getFrameRate()) 
+		+" FPS -- "	+ to_string(getPercentBusy()) 
+		+ "%% CPU [" + to_string((1e3f * getBusyTimePerFrame())) 
+		+ "ms busy, " + to_string((1e3f * getIdleTimePerFrame())) 
+		+ "ms idle]\n");
+
 	addDebugLine(debugLine);
     if (effect) {
        FCEffect::DebugInfo d(shared_from_this());
@@ -276,7 +280,7 @@ const uint8_t* FCEffectRunner::getPixel(unsigned index) const
     return OPCClient::Header::view(frameBuffer).data() + index * 3;
 }
 
-void FCEffectRunner::getPixelColor(unsigned index, ci::Vec3f rgb)
+void FCEffectRunner::getPixelColor(unsigned index, vec3 rgb)
 {
     const uint8_t *byte = getPixel(index);
     for (unsigned i = 0; i < 3; i++) {
@@ -333,4 +337,4 @@ FCEffect::DebugInfo::DebugInfo(FCEffectRunnerRef runner)
 void FCEffect::beginFrame(const FrameInfo &f) {}
 void FCEffect::endFrame(const FrameInfo &f) {}
 void FCEffect::debug(const DebugInfo &f) {}
-void FCEffect::postProcess(const ci::Vec3f rgb, const PixelInfo& p) {}
+void FCEffect::postProcess(const vec3 rgb, const PixelInfo& p) {}

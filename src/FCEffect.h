@@ -36,11 +36,15 @@
 
 #pragma once
 
-#include "cinder/app/AppNative.h"
+#include "cinder/app/App.h"
 #include "cinder/Json.h"
 
+using namespace std;
+using namespace ci;
+using namespace ci::app;
+
 class FCEffectRunner;
-typedef boost::shared_ptr< FCEffectRunner > FCEffectRunnerRef;
+typedef std::shared_ptr< FCEffectRunner > FCEffectRunnerRef;
 
 // Abstract base class for one LED effect
 class FCEffect  {
@@ -62,7 +66,7 @@ public:
      * per pixel. It therefore can't have side-effects other than producing an RGB
      * value.
      */
-    virtual void shader(ci::Vec3f& rgb, const PixelInfo& p) = 0;
+    virtual void shader(vec3& rgb, const PixelInfo& p) = 0;
 
     /*
      * Serialized post-processing on one pixel. This runs after shader(), once
@@ -70,7 +74,7 @@ public:
      * be used for anything CPU-intensive, but some effects require closed-loop
      * feedback based on the calculated color.
      */
-    virtual void postProcess(const ci::Vec3f rgb, const PixelInfo& p);
+    virtual void postProcess(const vec3 rgb, const PixelInfo& p);
 
     // Optional begin/end frame callbacks
     virtual void beginFrame(const FrameInfo& f)= 0;
@@ -87,7 +91,7 @@ public:
 		PixelInfo(unsigned index, ci::JsonTree layout);
 
         // Point coordinates
-        ci::Vec3f point;
+        vec3 point;
 
         // Index in the framebuffer
         unsigned index;

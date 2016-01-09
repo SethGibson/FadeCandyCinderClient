@@ -36,11 +36,15 @@
 #pragma once
 
 #include "cinder/Utilities.h"
-#include "cinder/app/AppNative.h"
+#include "cinder/app/App.h"
 #include "FCEffect.h"
 
+using namespace std;
+using namespace ci;
+using namespace ci::app;
+
 class FCEffectVisualizer;
-typedef boost::shared_ptr< FCEffectVisualizer > FCEffectVisualizerRef;
+typedef std::shared_ptr< FCEffectVisualizer > FCEffectVisualizerRef;
 
 class FCEffectVisualizer {
 public:
@@ -52,12 +56,12 @@ public:
 	FCEffectVisualizer ();
 	
     virtual void update();
-	virtual void draw(ci::Vec3f& rgb, const FCEffect::PixelInfo& p);
+	virtual void draw(vec3& rgb, const FCEffect::PixelInfo& p);
 protected:
     
 private:
     FCEffectRunnerRef		mEffectRunner;
 	ci::JsonTree			mCurrentLayout;
 	float					mScale;
-	ci::Vec3f				mOffset;
+	vec3					mOffset;
 };
