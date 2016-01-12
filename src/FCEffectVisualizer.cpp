@@ -35,10 +35,17 @@
 */
 
 #include "FCEffectVisualizer.h"
-#include "cinder/gl/gl.h"
 
 using namespace ci;
  
+FCVizNode::FCVizNode(){}
+
+FCVizNode::FCVizNode(const FCEffect::PixelInfo &pInfo, const vec3 &pRGB)
+{
+	Pos = pInfo.point;
+	RGB = Color(ColorModel::CM_RGB, pRGB);
+}
+
 FCEffectVisualizer::FCEffectVisualizer() : mScale(120), mOffset(vec3(100,100,0))
 {
 	

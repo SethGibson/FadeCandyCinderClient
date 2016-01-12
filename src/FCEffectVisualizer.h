@@ -37,6 +37,7 @@
 
 #include "cinder/Utilities.h"
 #include "cinder/app/App.h"
+#include "cinder/gl/gl.h"
 #include "FCEffect.h"
 
 using namespace std;
@@ -45,6 +46,14 @@ using namespace ci::app;
 
 class FCEffectVisualizer;
 typedef std::shared_ptr< FCEffectVisualizer > FCEffectVisualizerRef;
+
+struct FCVizNode {
+	FCVizNode();
+	FCVizNode(const FCEffect::PixelInfo &pInfo, const vec3 &pRGB);
+
+	vec3 Pos;
+	Color RGB;
+};
 
 class FCEffectVisualizer {
 public:
@@ -64,4 +73,9 @@ private:
 	ci::JsonTree			mCurrentLayout;
 	float					mScale;
 	vec3					mOffset;
+
+	vector<FCVizNode>		mVizNodes;
+	gl::VboRef				mInstanceData;
+	gl::BatchRef			mInstanceDraw;
+	gl::GlslProgRef			mInstanceShader;
 };
